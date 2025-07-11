@@ -1,0 +1,17 @@
+[project]
+name = "pocketflow-template-python"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "debugpy>=1.8.14",
+    "dotenv>=0.9.9",
+    "openai>=1.0.0",
+    "pillow>=9.0.0",
+    "pocketflow>=0.0.1",
+    "pydantic>=1.10.0",
+    "python-dotenv>=1.0.0",
+    "pyvespa>=0.41.0",
+    "pyyaml>=6.0",
+]

@@ -4,6 +4,9 @@ from nodes import (
     FinalizerNode, HumanReviewNode, ErrorNode
 )
 
+
+
+
 def create_norma_agent_flow():
     """Создает и возвращает агентный граф для работы с нормативными документами"""
     
@@ -40,9 +43,9 @@ def create_norma_agent_flow():
     human_review - "default" >> None
     error_handler - "completed" >> None
     error_handler - "default" >> None
-    
+    flow = Flow(start=planner)
     # Создаем граф, начиная с планировщика
-    return Flow(start=planner)
+    return flow
 
 # Создаем основной граф
 norma_agent_flow = create_norma_agent_flow()

@@ -1,0 +1,8 @@
+pyproject.toml
+src/agent_debug/__init__.py
+src/agent_debug/decorators.py
+src/agent_debug/state_manager.py
+src/agent_debug.egg-info/PKG-INFO
+src/agent_debug.egg-info/SOURCES.txt
+src/agent_debug.egg-info/dependency_links.txt
+src/agent_debug.egg-info/top_level.txt

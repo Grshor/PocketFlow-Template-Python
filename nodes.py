@@ -12,16 +12,16 @@ from utils.schemas import AnalyzerOutput, JudgeOutput, FinalizerOutput
 from utils.calculate import calculate
 import json
 import re
-from utils.vscode_debug import vscode_breakpoint
+from agent_debug.decorators import recordable_node
 
 class PlannerNode(Node):
     """Создает план поиска на основе запроса пользователя с использованием YAML-промпта"""
     
-    @vscode_breakpoint
+    @recordable_node
     def prep(self, shared):
         return shared["user_query"]
     
-    @vscode_breakpoint
+    @recordable_node
     def exec(self, user_query):
         # Используем YAML-промпт планировщика
         system_prompt = get_planner_prompt()
@@ -42,7 +42,7 @@ class PlannerNode(Node):
         
         return parsed
     
-    @vscode_breakpoint
+    @recordable_node
     def post(self, shared, prep_res, exec_res):
         # Проверяем что exec_res не None
         if exec_res is None:
@@ -78,7 +78,7 @@ class PlannerNode(Node):
 class ExecutorNode(Node):
     """Выполняет текущий шаг плана с поддержкой Vision API для анализа изображений"""
     
-    @vscode_breakpoint
+    @recordable_node
     def prep(self, shared):
         plan = shared["plan"]
         current_index = plan["current_step_index"]
@@ -96,7 +96,7 @@ class ExecutorNode(Node):
         
         return current_step
     
-    @vscode_breakpoint
+    @recordable_node
     def exec(self, current_step):
         if current_step is None:
             return {"status": "completed", "message": "Все шаги выполнены"}
@@ -415,7 +415,7 @@ class ExecutorNode(Node):
                 "output": {"data": "Неподдерживаемый инструмент"}
             }
     
-    @vscode_breakpoint
+    @recordable_node
     def post(self, shared, prep_res, exec_res):
         plan = shared["plan"]
         current_index = plan["current_step_index"]
@@ -490,7 +490,7 @@ class ExecutorNode(Node):
 class JudgeNode(Node):
     """Оценивает результат и принимает решение о следующем действии с использованием YAML-промпта"""
     
-    @vscode_breakpoint
+    @recordable_node
     def prep(self, shared):
         current_index = shared["plan"]["current_step_index"]
         
@@ -506,7 +506,7 @@ class JudgeNode(Node):
         
         return judge_input
     
-    @vscode_breakpoint
+    @recordable_node
     def exec(self, judge_input):
         # Используем YAML-промпт судьи с подстановкой переменных
         import yaml
@@ -569,7 +569,7 @@ class JudgeNode(Node):
             }
         }
     
-    @vscode_breakpoint
+    @recordable_node
     def post(self, shared, prep_res, exec_res):
         # Проверяем что exec_res не None
         if exec_res is None:
@@ -633,7 +633,7 @@ class JudgeNode(Node):
 class FinalizerNode(Node):
     """Создает итоговый ответ пользователю с использованием YAML-промпта"""
     
-    @vscode_breakpoint
+    @recordable_node
     def prep(self, shared):
         # Собираем все успешные результаты
         successful_steps = {}
@@ -649,7 +649,7 @@ class FinalizerNode(Node):
         
         return finalizer_input
     
-    @vscode_breakpoint
+    @recordable_node
     def exec(self, finalizer_input):
         # Используем YAML-промпт финализатора с подстановкой переменных
         import yaml
@@ -688,7 +688,7 @@ class FinalizerNode(Node):
         print(f"❌ ОТЛАДКА ФИНАЛИЗАТОРА: Все попытки неудачны после {max_retries} попыток")
         return parsed
     
-    @vscode_breakpoint
+    @recordable_node
     def post(self, shared, prep_res, exec_res):
         if "error" in exec_res:
             shared["status"] = "error"
@@ -722,7 +722,7 @@ class FinalizerNode(Node):
 class HumanReviewNode(Node):
     """Узел для случаев, когда требуется вмешательство человека"""
     
-    @vscode_breakpoint
+    @recordable_node
     def prep(self, shared):
         return {
             "reason": shared.get("human_review_reason", "Неизвестная причина"),
@@ -730,7 +730,7 @@ class HumanReviewNode(Node):
             "current_data": shared["step_results"]
         }
     
-    @vscode_breakpoint
+    @recordable_node
     def exec(self, prep_res):
         print("\n🚨 ТРЕБУЕТСЯ ВМЕШАТЕЛЬСТВО ЧЕЛОВЕКА 🚨")
         print(f"Причина: {prep_res['reason']}")
@@ -742,7 +742,7 @@ class HumanReviewNode(Node):
         # Пока просто возвращаем статус
         return {"status": "human_review_requested", "data": prep_res}
     
-    @vscode_breakpoint
+    @recordable_node
     def post(self, shared, prep_res, exec_res):
         shared["human_review_result"] = exec_res
         return "completed"
@@ -750,16 +750,16 @@ class HumanReviewNode(Node):
 class ErrorNode(Node):
     """Узел для обработки ошибок"""
     
-    @vscode_breakpoint
+    @recordable_node
     def prep(self, shared):
         return shared.get("error", "Неизвестная ошибка")
     
-    @vscode_breakpoint
+    @recordable_node
     def exec(self, error_msg):
         print(f"❌ ОШИБКА: {error_msg}")
         return {"error_handled": True, "error_message": error_msg}
     
-    @vscode_breakpoint
+    @recordable_node
     def post(self, shared, prep_res, exec_res):
         shared["error_handled"] = True
         return "completed"

@@ -5,3 +5,6 @@ PyYAML>=6.0
 python-dotenv>=1.0.0
 pyvespa>=0.41.0
 Pillow>=9.0.0
+uvicorn
+fastapi
+pyautogen>=0.2.20

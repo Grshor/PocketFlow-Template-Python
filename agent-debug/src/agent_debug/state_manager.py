@@ -89,12 +89,13 @@ class StateManager:
     """Manages the state of the debugging session, including checkpoints and mode."""
     def __init__(self):
         self.lock = threading.Lock()
+        self.nodes = {}
         self.session_id = int(time.time())
 
-    def add_checkpoint(self, node_id: str, inputs: Any, output: Any, execution_time: float):
+    def add_checkpoint(self, node_id: str, inputs: Any, output: Any, execution_time: float, shared_store_state: Any | None = None):
         """Records a checkpoint and prints it to stdout for the IDE."""
         with self.lock:
-            checkpoint = Checkpoint(self.session_id, inputs, output, execution_time)
+            checkpoint = Checkpoint(self.session_id, inputs, output, execution_time, shared_store_state=shared_store_state)
             if node_id not in self.nodes:
                 self.nodes[node_id] = Node(node_id, [])
             self.nodes[node_id].checkpoints.append(checkpoint)
@@ -108,12 +109,12 @@ class StateManager:
                 return self.nodes[node_id].checkpoints[-1]
             return None
     
-    def apply_checkpoint(self, checkpoint: Checkpoint):
-        """Applies a checkpoint to the state manager - if it was cached."""
-        with self.lock:
-            if checkpoint.status == NodeStatus.CACHED:
-                # TODO: this will not work since we dont have pointers, do something else
-                self.shared_store = checkpoint.shared_store_state
+    # def apply_checkpoint(self, checkpoint: Checkpoint):
+    #     """Applies a checkpoint to the state manager - if it was cached."""
+    #     with self.lock:
+    #         if checkpoint.status == NodeStatus.CACHED:
+    #             # TODO: this will not work since we dont have pointers, do something else
+    #             self.shared_store = checkpoint.shared_store_state
 
 # Singleton instance to be used by the decorators and runner
 state_manager = StateManager()

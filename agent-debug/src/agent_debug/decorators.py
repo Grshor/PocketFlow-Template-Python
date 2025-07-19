@@ -3,6 +3,15 @@ import time
 import json
 from .state_manager import state_manager, Checkpoint
 
+def find_shared(args):
+    """
+    Finds a dictionary in the arguments, which is assumed to be the shared state.
+    """
+    for arg in args:
+        if isinstance(arg, dict):
+            return arg
+    return None
+
 def recordable_node(func):
     """
     A decorator that records the inputs and outputs of a function,
@@ -13,11 +22,13 @@ def recordable_node(func):
         # Use the function's fully qualified name as a unique ID
         node_id = func.__qualname__
 
-        # --- Execute and Record ---
-        # if no cache exists, execute the function normally.
+        # if a cached checkpoint exists, use it.
         cached_checkpoint = state_manager.get_checkpoint(node_id)
-        if cached_checkpoint:
-            apply_checkpoint(cached_checkpoint)
+        if cached_checkpoint and cached_checkpoint.shared_store_state:
+            shared = find_shared(args)
+            if shared is not None:
+                shared.clear()
+                shared.update(cached_checkpoint.shared_store_state)
             return cached_checkpoint.output
         
         # If no cache exists, execute the function normally.
@@ -35,17 +46,9 @@ def recordable_node(func):
         except (TypeError, OverflowError):
             inputs = {"args": str(args), "kwargs": str(kwargs), "unserializable": True}
 
-        state_manager.add_checkpoint(node_id, inputs, output, execution_time)
+        shared = find_shared(args)
+        state_manager.add_checkpoint(node_id, inputs, output, execution_time, shared_store_state=shared)
         
         return output
 
-    return wrapper 
-
-# TODO: add a function that applies a checkpoint to the global state of agent.
-
-
-def apply_checkpoint(checkpoint: Checkpoint):
-    """
-    Applies a checkpoint to the global state of the agent.
-    """
-    pass
+    return wrapper
